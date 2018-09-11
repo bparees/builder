@@ -1,16 +1,18 @@
-package builder
+package main
 
 import (
+	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
 
+	k8sversion "k8s.io/apimachinery/pkg/version"
 	"k8s.io/kubernetes/pkg/kubectl/cmd/templates"
 	kcmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 
 	"github.com/openshift/builder/pkg/build/builder/cmd"
-	cmdversion "github.com/openshift/origin/pkg/cmd/version"
-	"github.com/openshift/origin/pkg/version"
+	"github.com/openshift/builder/pkg/version"
 )
 
 var (
@@ -45,6 +47,21 @@ var (
 		It expects to be run inside of a container.`)
 )
 
+// NewCmdVersion provides a shim around version for
+// non-client packages that require version information
+func NewCmdVersion(fullName string, versionInfo k8sversion.Info, out io.Writer) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Display version",
+		Long:  "Display version",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Fprintf(out, "%s %v\n", fullName, versionInfo)
+		},
+	}
+
+	return cmd
+}
+
 // NewCommandS2IBuilder provides a CLI handler for S2I build type
 func NewCommandS2IBuilder(name string) *cobra.Command {
 	cmd := &cobra.Command{
@@ -57,7 +74,7 @@ func NewCommandS2IBuilder(name string) *cobra.Command {
 		},
 	}
 
-	cmd.AddCommand(cmdversion.NewCmdVersion(name, version.Get(), os.Stdout))
+	cmd.AddCommand(NewCmdVersion(name, version.Get(), os.Stdout))
 	return cmd
 }
 
@@ -72,7 +89,7 @@ func NewCommandDockerBuilder(name string) *cobra.Command {
 			kcmdutil.CheckErr(err)
 		},
 	}
-	cmd.AddCommand(cmdversion.NewCmdVersion(name, version.Get(), os.Stdout))
+	cmd.AddCommand(NewCmdVersion(name, version.Get(), os.Stdout))
 	return cmd
 }
 
@@ -88,7 +105,7 @@ func NewCommandGitClone(name string) *cobra.Command {
 			kcmdutil.CheckErr(err)
 		},
 	}
-	cmd.AddCommand(cmdversion.NewCmdVersion(name, version.Get(), os.Stdout))
+	cmd.AddCommand(NewCmdVersion(name, version.Get(), os.Stdout))
 	return cmd
 }
 
@@ -102,7 +119,7 @@ func NewCommandManageDockerfile(name string) *cobra.Command {
 			kcmdutil.CheckErr(err)
 		},
 	}
-	cmd.AddCommand(cmdversion.NewCmdVersion(name, version.Get(), os.Stdout))
+	cmd.AddCommand(NewCmdVersion(name, version.Get(), os.Stdout))
 	return cmd
 }
 
@@ -116,6 +133,6 @@ func NewCommandExtractImageContent(name string) *cobra.Command {
 			kcmdutil.CheckErr(err)
 		},
 	}
-	cmd.AddCommand(cmdversion.NewCmdVersion(name, version.Get(), os.Stdout))
+	cmd.AddCommand(NewCmdVersion(name, version.Get(), os.Stdout))
 	return cmd
 }
